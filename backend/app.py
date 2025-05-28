@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import base64
 from PIL import Image
+from pyzbar.pyzbar import decode as lerqr
 from io import BytesIO
 
 
@@ -31,22 +32,16 @@ def home():
         image = Image.open(BytesIO(image_bytes))
     except IOError:
         return jsonify({'error': 'Não foi possível abrir a imagem. Dados corrompidos?'}), 400
-
-
-    width, height = image.size
-    print(f"Largura: {width}, Altura: {height}")
-
-    gray_image = image.convert('L')
-    resized_image = image.resize((1080, 720))
-    output_path = "processed_image.png"
-    try:
-        resized_image.save(output_path)
-        print(f"Imagem processada salva em: {output_path}")
-    except Exception as e:
-        print(f"Erro ao salvar a imagem: {e}")
-
+    
+    teste = lerqr(image)
+    if teste:
+        msg = teste[0].data.decode('utf-8')
+        print(msg)
+        return jsonify({'message': 'Imagem recebida e processada com sucesso!'}), 200
+    
+    return jsonify({'error': 'Não foi possível ler o qrcode na imagem.'}), 400
+    
     # Retornar uma resposta de sucesso
-    return jsonify({'message': 'Imagem recebida e processada com sucesso!', 'width': width, 'height': height}), 200
 
 if '__main__' == __name__:
     app.run(debug=True)

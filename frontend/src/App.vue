@@ -9,12 +9,10 @@
 
     <div v-else class="video-wrapper">
       <video ref="videoElement" autoplay muted playsinline></video>
-      <button @click="takePhoto" :disabled="!isCameraReady" class="take-photo-button">
-        Tirar Foto
-      </button>
     </div>
+    <button @click="startCamera" class="take-photo-button">Tirar Foto</button>
 
-    <div v-show="photoTaken" class="photo-preview">
+    <div class="photo-preview">
       <h2>Foto Capturada:</h2>
       <canvas ref="photoCanvas"></canvas>
       <a :href="photoDataURL" download="minha-foto.png" class="download-button">
@@ -28,7 +26,7 @@
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 
 export default {
   name: 'CameraApp', // Nome do seu componente
@@ -45,6 +43,7 @@ export default {
 
     // Função para iniciar a câmera
     const startCamera = async () => {
+      
       errorMessage.value = ''; // Limpa mensagens de erro anteriores
       isCameraReady.value = false;
       photoTaken.value = false;
@@ -62,10 +61,10 @@ export default {
       try {
         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
         videoElement.value.srcObject = currentStream;
-
         videoElement.value.onloadedmetadata = () => {
           videoElement.value.play(); // Garantir que o vídeo comece a tocar
           isCameraReady.value = true;
+          takePhoto()
           console.log('Câmera carregada e vídeo pronto!');
         };
 
@@ -133,9 +132,6 @@ export default {
     };
 
     // Hooks de ciclo de vida do Vue
-    onMounted(() => {
-      startCamera(); // Inicia a câmera quando o componente é montado
-    });
 
     onBeforeUnmount(() => {
       stopCamera(); // Para a câmera quando o componente é desmontado
@@ -150,6 +146,7 @@ export default {
       photoTaken,
       photoDataURL,
       takePhoto,
+      startCamera,
       clearPhoto
     };
   }
