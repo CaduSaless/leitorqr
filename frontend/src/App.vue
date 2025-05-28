@@ -112,7 +112,7 @@ export default {
       const data = {
         image: canvas.toDataURL('image/png')
       }
-      fetch('https://localhost:5000', {
+      fetch('https://400e-2804-d59-f727-8b00-4c48-e729-b9a4-8713.ngrok-free.app/', {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
