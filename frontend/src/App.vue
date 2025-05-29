@@ -101,7 +101,7 @@ export default {
       let c = 0
       let attempts = 0
       const inicio = Date.now()
-      while (c < 1 && attempts < 50 && (Date.now() - inicio) < 15000) {
+      while (c === 0 && attempts < 50 && (Date.now() - inicio) < 15000) {
         video = videoElement.value
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         data.image = canvas.toDataURL('image/png')
@@ -114,7 +114,8 @@ export default {
           body: JSON.stringify(data)
         })
         const responseconv = await response.json()
-        if (responseconv.status == 200) {
+        console.log(responseconv)
+        if (responseconv.message) {
           c = 1
         }
         attempts++
