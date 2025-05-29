@@ -1,27 +1,17 @@
 <template>
   <div class="camera-app-container">
-    <h1>Webcam Access with Vue.js</h1>
+    <h1>Scaneie o QRcode</h1>
+    <button @click="startCamera" class="take-photo-button">Tirar Foto</button>
 
     <div v-if="errorMessage" class="error-message">
       <p>Error: {{ errorMessage }}</p>
       <p>Please check your browser permissions or ensure a camera is available.</p>
     </div>
 
-    <div v-else class="video-wrapper">
+    <div v-else class="video-wrapper" v-show="scan">
       <video ref="videoElement" autoplay muted playsinline></video>
     </div>
-    <button @click="startCamera" class="take-photo-button">Tirar Foto</button>
-
-    <div class="photo-preview">
-      <h2>Foto Capturada:</h2>
-      <canvas ref="photoCanvas"></canvas>
-      <a :href="photoDataURL" download="minha-foto.png" class="download-button">
-        Baixar Foto
-      </a>
-      <button @click="clearPhoto" class="clear-photo-button">
-        Tirar Outra
-      </button>
-    </div>
+      <canvas ref="photoCanvas" style="display: none"></canvas>
   </div>
 </template>
 
@@ -38,15 +28,14 @@ export default {
 
     const errorMessage = ref('');  // Mensagens de erro para o usuário
     const isCameraReady = ref(false); // Indica se a câmera está pronta
-    const photoTaken = ref(false);   // Indica se uma foto foi tirada
     const photoDataURL = ref('');    // URL da foto capturada
+    const scan = ref(false)
 
     // Função para iniciar a câmera
     const startCamera = async () => {
-      
+      scan.value = true
       errorMessage.value = ''; // Limpa mensagens de erro anteriores
       isCameraReady.value = false;
-      photoTaken.value = false;
       photoDataURL.value = '';
 
       const constraints = {
@@ -91,47 +80,51 @@ export default {
       }
     };
 
+
     // Função para tirar uma foto
-    const takePhoto = () => {
+    async function takePhoto(){
       if (!isCameraReady.value || !videoElement.value) {
         errorMessage.value = 'A câmera não está pronta para tirar a foto.';
         return;
       }
 
-      const video = videoElement.value;
       const canvas = photoCanvas.value;
       const context = canvas.getContext('2d');
-
+      let video = videoElement.value;
+      
       // Ajustar o tamanho do canvas para o tamanho atual do vídeo
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
-      // Desenhar o frame atual do vídeo no canvas
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
       const data = {
         image: canvas.toDataURL('image/png')
       }
-      fetch('https://400e-2804-d59-f727-8b00-4c48-e729-b9a4-8713.ngrok-free.app/', {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            })
-            .then(data => {console.log(data.json())})
+      let c = 0
+      let attempts = 0
+      const inicio = Date.now()
+      while (c < 1 && attempts < 50 && (Date.now() - inicio) < 15000) {
+        video = videoElement.value
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        data.image = canvas.toDataURL('image/png')
+
+        const response = await fetch('https://400e-2804-d59-f727-8b00-4c48-e729-b9a4-8713.ngrok-free.app/', {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        })
+        const responseconv = await response.json()
+        if (responseconv.status == 200) {
+          c = 1
+        }
+        attempts++
+      }
+      if (c === 0) {
+        errorMessage.value = "Não foi possível escanear o QRcode. Tente novamente"
+      }
+      scan.value = false
       // Converter o conteúdo do canvas para uma imagem URL
-      photoDataURL.value = canvas.toDataURL('image/png'); // 'image/jpeg' é outra opção
-      photoTaken.value = true;
-      console.log('Foto capturada!');
-    };
-
-    // Limpar a foto capturada e voltar ao vídeo
-    const clearPhoto = () => {
-      photoTaken.value = false;
-      photoDataURL.value = '';
-    };
-
-    // Hooks de ciclo de vida do Vue
+    }
 
     onBeforeUnmount(() => {
       stopCamera(); // Para a câmera quando o componente é desmontado
@@ -143,11 +136,10 @@ export default {
       photoCanvas,
       errorMessage,
       isCameraReady,
-      photoTaken,
       photoDataURL,
       takePhoto,
       startCamera,
-      clearPhoto
+      scan
     };
   }
 };
@@ -231,61 +223,6 @@ video {
   opacity: 0.7;
 }
 
-.photo-preview {
-  margin-top: 30px;
-  text-align: center;
-  background-color: #ffffff;
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
-  max-width: 600px;
-  width: 100%;
-}
-
-.photo-preview h2 {
-  color: #34495e;
-  margin-bottom: 20px;
-}
-
-canvas {
-  max-width: 100%;
-  height: auto;
-  border: 2px solid #555;
-  border-radius: 8px;
-  display: block;
-  margin: 0 auto 20px auto; /* Centraliza e adiciona margem inferior */
-}
-
-.download-button,
-.clear-photo-button {
-  display: inline-block;
-  padding: 10px 20px;
-  font-size: 1em;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin: 0 10px;
-  transition: background-color 0.3s ease;
-}
-
-.download-button {
-  background-color: #007bff;
-  color: white;
-  text-decoration: none; /* Para o link */
-}
-
-.download-button:hover {
-  background-color: #0056b3;
-}
-
-.clear-photo-button {
-  background-color: #6c757d;
-  color: white;
-}
-
-.clear-photo-button:hover {
-  background-color: #5a6268;
-}
 
 /* Responsividade básica */
 @media (max-width: 768px) {
@@ -298,15 +235,6 @@ canvas {
   .take-photo-button {
     font-size: 1em;
     padding: 10px 20px;
-  }
-  .photo-preview {
-    padding: 15px;
-  }
-  .download-button,
-  .clear-photo-button {
-    font-size: 0.9em;
-    padding: 8px 15px;
-    margin: 5px;
   }
 }
 </style>
