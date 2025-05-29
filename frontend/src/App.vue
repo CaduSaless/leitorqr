@@ -8,11 +8,17 @@
       <p>Please check your browser permissions or ensure a camera is available.</p>
     </div>
 
+    <div v-if="succesMessage" class="succes-message">
+      <p>Sucesso: {{ succesMessage }}</p>
+      <p>Este bilhete foi validado pelo nosso servidor.</p>
+    </div>
+
     <div v-else class="video-wrapper" v-show="scan">
       <video ref="videoElement" autoplay muted playsinline></video>
     </div>
       <canvas ref="photoCanvas" style="display: none"></canvas>
   </div>
+
 </template>
 
 <script>
@@ -27,12 +33,14 @@ export default {
     let currentStream = null;      // Armazena o MediaStream da câmera
 
     const errorMessage = ref('');  // Mensagens de erro para o usuário
+    const succesMessage = ref('')
     const isCameraReady = ref(false); // Indica se a câmera está pronta
     const photoDataURL = ref('');    // URL da foto capturada
     const scan = ref(false)
 
     // Função para iniciar a câmera
     const startCamera = async () => {
+      succesMessage.value = ''
       scan.value = true
       errorMessage.value = ''; // Limpa mensagens de erro anteriores
       isCameraReady.value = false;
@@ -117,6 +125,7 @@ export default {
         console.log(responseconv)
         if (responseconv.message) {
           c = 1
+          succesMessage.value = 'Válido'
         }
         attempts++
       }
@@ -140,7 +149,8 @@ export default {
       photoDataURL,
       takePhoto,
       startCamera,
-      scan
+      scan,
+      succesMessage
     };
   }
 };
@@ -167,9 +177,21 @@ h1 {
 }
 
 .error-message {
-  color: #e74c3c;
+  color: #e74c3c; 
   background-color: #fdeded;
   border: 1px solid #e74c3c;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  margin-bottom: 20px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.succes-message{
+  color: #45e73c;
+  background-color: #edfdf2;
+  border: 1px solid #45e73c;
   padding: 15px;
   border-radius: 8px;
   text-align: center;
